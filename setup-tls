@@ -1,0 +1,53 @@
+umask 077
+#verify a hostname
+[[ -z $HOSTNAME ]] && HOSTNAME=$(hostname)
+[[ -z $HOSTNAME ]] && echo 'Warning! No hostname set, key works with IP only' >&2
+# Get the primary IP address of the system
+IPADDR=$(ip route get 1 | awk 'NR==1{print $NF}')
+function pause(){
+ sleep 3
+ echo '-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~'
+ echo "$*"
+ echo
+ read -rs -N 1 -p 'press any key to procede...'
+ echo
+}
+
+pause 'Set up a working space.  We will use the directory docker-ca in the home directory.'
+mkdir -v ~/docker-ca && cd ~/docker-ca && pwd
+
+# Private CA
+pause 'Create the CA private key. You be prompted for a passphrase. Make sure you remember it.'
+( set -x; openssl genrsa -aes256 -out ca-key.pem 2048 )
+
+pause 'Create the CA certificate (public key)'
+( set -x; openssl req -new -x509 -days 90 -key ca-key.pem -sha256 -out ca.pem )
+
+# Server setup
+pause 'Create the server private key.'
+( set -x; openssl genrsa -out server-key.pem 2048 )
+
+pause 'Create the certificate signing request (CSR) and specify the IP address of the machine that the Docker daemon is running on.'
+( set -x; openssl req -subj "/CN=$HOSTNAME" -new -key server-key.pem -out server.csr )
+
+pause 'Generate an extention file, used by the CA to certify additional IPs for which the certificate is valid.'
+( set -x; echo subjectAltName = IP:$IPADDR,IP:127.0.0.1 > srvExtfile.cnf )
+
+pause 'Sign the server key.'
+( set -x; openssl x509 -req -days 90 -in server.csr-CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile srvExtfile.cnf )
+
+# Client setup
+pause 'Generate the client private key.'
+( set -x; openssl genrsa -out client-key.pem 2048 )
+
+pause 'Create the client CSR.'
+( set -x; openssl req -subj '/CN=client' -new -key client-key.pem -out client.csr  )
+
+pause 'Generate an extention file, used by the CA to indicate that the certificate is not valid for servers.'
+( set -x; echo extendedKeyUsage = clientAuth > clientExtfile.cnf )
+
+pause 'sign our client public key.'
+( set -x; openssl x509 -req -days 90 -in client.csr -CA ca.pem -CAkey ca-key.pem-CAcreateserial -out client-cert.pem -extfile clientExtfile.cnf  )
+
+echo 'Pick up at EX 2.6, secure & copy the keys, and configure the system.'
+
