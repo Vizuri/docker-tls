@@ -34,7 +34,7 @@ pause 'Generate an extention file, used by the CA to certify additional IPs for 
 ( set -x; echo subjectAltName = IP:$IPADDR,IP:127.0.0.1 > srvExtfile.cnf )
 
 pause 'Sign the server key.'
-( set -x; openssl x509 -req -days 90 -in server.csr-CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile srvExtfile.cnf )
+( set -x; openssl x509 -req -days 90 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile srvExtfile.cnf )
 
 # Client setup
 pause 'Generate the client private key.'
@@ -47,7 +47,7 @@ pause 'Generate an extention file, used by the CA to indicate that the certifica
 ( set -x; echo extendedKeyUsage = clientAuth > clientExtfile.cnf )
 
 pause 'sign our client public key.'
-( set -x; openssl x509 -req -days 90 -in client.csr -CA ca.pem -CAkey ca-key.pem-CAcreateserial -out client-cert.pem -extfile clientExtfile.cnf  )
+( set -x; openssl x509 -req -days 90 -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client-cert.pem -extfile clientExtfile.cnf  )
 
 echo 'Pick up at EX 2.6, secure & copy the keys, and configure the system.'
 
