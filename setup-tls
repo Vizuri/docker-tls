@@ -13,9 +13,9 @@ function pause(){
  sleep $1
  shift
  echo '-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-'
- echo "$BOLD_ON" "$*"
+ echo "$BOLD_ON" "$*" "$BOLD_OFF"
  read -rs -N 1 -p 'press any key to procede...'
- echo -e "$BOLD_OFF\n"
+ echo; echo
 }
 
 pause 0 'Set up a working space.  We will use the directory docker-ca in the home directory.'
