@@ -6,8 +6,8 @@ umask 077
 [[ -z $HOSTNAME ]] && echo 'Warning! No hostname set, key works with IP only' >&2
 # Get the primary IP address of the system
 IPADDR=$(ip route get 1 | awk 'NR==1{print $NF}')
-BOLD_ON=$(tput smso)
-BOLD_OFF=$(tput rmso)
+BOLD_ON=$(tput bold)
+BOLD_OFF=$(tput sgr0)
 
 function pause(){
  sleep $1
