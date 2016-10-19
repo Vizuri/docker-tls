@@ -6,14 +6,16 @@ umask 077
 [[ -z $HOSTNAME ]] && echo 'Warning! No hostname set, key works with IP only' >&2
 # Get the primary IP address of the system
 IPADDR=$(ip route get 1 | awk 'NR==1{print $NF}')
+BOLD_ON=$(tput smso)
+BOLD_OFF=$(tput rmso)
+
 function pause(){
  sleep $1
  shift
  echo '-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-'
- echo "$*"
- echo
+ echo "$BOLD_ON" "$*"
  read -rs -N 1 -p 'press any key to procede...'
- echo; echo
+ echo -e "$BOLD_OFF\n"
 }
 
 pause 0 'Set up a working space.  We will use the directory docker-ca in the home directory.'
