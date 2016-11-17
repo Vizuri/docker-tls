@@ -14,7 +14,7 @@ function pause(){
  shift
  echo '-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-=~-'
  echo "$BOLD_ON" "$*" "$BOLD_OFF"
- read -rs -N 1 -p 'press any key to procede...'
+ read -rs -N 1 -p 'press any key to proceed...'
  echo; echo
 }
 
