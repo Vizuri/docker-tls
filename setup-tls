@@ -18,15 +18,39 @@ function pause(){
  echo; echo
 }
 
+# arg-1 : function that was performed
+# arg-2 : exit status
+# hard exit if exit status was not zero
+function statusCheck(){
+    if test $# -ne 2
+    then
+        echo "error calling statusCheck"
+        exit 1
+    fi
+    if test $2 -ne 0
+    then
+        echo "error in $1"
+        exit 1
+    fi
+}
+
 pause 0 'Set up a working space.  We will use the directory docker-ca in the home directory.'
+WORKING="docker-ca"
 mkdir -v ~/docker-ca && cd ~/docker-ca && pwd
+if test $(basename $(pwd)) != "$WORKING"
+then
+    echo "error, unable to use directory $WORKING"
+    exit 1
+fi
 
 # Private CA
 pause 3 'Create the CA private key. You be prompted for a passphrase. Make sure you remember it.'
 ( set -x; openssl genrsa -aes256 -out ca-key.pem 2048 )
+statusCheck "create CA private key" $?
 
 pause 3 'Create the CA certificate (public key)'
 ( set -x; openssl req -new -x509 -days 90 -key ca-key.pem -sha256 -out ca.pem )
+statusCheck "create CA certificate" $?
 
 ls -l ~/docker-ca/
 
@@ -35,15 +59,19 @@ pause 1 'You now have the CA keys created.  This is the central point of trust. 
 # Server setup
 pause 3 'Create the server private key.'
 ( set -x; openssl genrsa -out server-key.pem 2048 )
+statusCheck "create server private key" $?
 
 pause 3 'Create the certificate signing request (CSR) and specify the IP address of the machine that the Docker daemon is running on.'
 ( set -x; openssl req -subj "/CN=$HOSTNAME" -new -key server-key.pem -out server.csr )
+statusCheck "create certificate signing key" $?
 
 pause 3 'Generate an extention file, used by the CA to certify additional IPs for which the certificate is valid.'
 ( set -x; echo subjectAltName = IP:$IPADDR,IP:127.0.0.1 > srvExtfile.cnf )
+statusCheck "create extention file" $?
 
 pause 3 'Sign the server key.'
 ( set -x; openssl x509 -req -days 90 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile srvExtfile.cnf )
+statusCheck "sign server key" $?
 
 ls -l ~/docker-ca/
 
@@ -52,15 +80,19 @@ pause 1 'You now have the server certificate created.  This would normally be do
 # Client setup
 pause 3 'Generate the client private key.'
 ( set -x; openssl genrsa -out client-key.pem 2048 )
+statusCheck "generate client private key" $?
 
 pause 3 'Create the client certificate signing request (CSR).'
 ( set -x; openssl req -subj '/CN=client' -new -key client-key.pem -out client.csr  )
+statusCheck "create client certificate" $?
 
 pause 3 'Generate an extention file, used by the CA to indicate that the certificate is not valid for servers, only clients.'
 ( set -x; echo extendedKeyUsage = clientAuth > clientExtfile.cnf )
+statusCheck "generating clientextention file" $?
 
 pause 3 'Sign our client public key.'
 ( set -x; openssl x509 -req -days 90 -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client-cert.pem -extfile clientExtfile.cnf  )
+statusCheck "signing client public key" $?
 
 ls -l ~/docker-ca/
 pause 3 'You now have the client certificate created.'
