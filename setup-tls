@@ -35,8 +35,8 @@ function statusCheck(){
 }
 
 pause 0 'Set up a working space.  We will use the directory docker-ca in the home directory.'
-WORKING="docker-ca"
-mkdir -v ~/docker-ca && cd ~/docker-ca && pwd
+WORKING="docker-certs"
+mkdir -v ~/$WORKING && cd ~/$WORKING && pwd
 if test $(basename $(pwd)) != "$WORKING"
 then
     echo "error, unable to use directory $WORKING"
@@ -52,7 +52,7 @@ pause 3 'Create the CA certificate (public key)'
 ( set -x; openssl req -new -x509 -days 90 -key ca-key.pem -sha256 -out ca.pem )
 statusCheck "create CA certificate" $?
 
-ls -l ~/docker-ca/
+ls -l ~/$WORKING/
 
 pause 1 'You now have the CA keys created.  This is the central point of trust.  These keys sign other keys (generating certificates).'
 
@@ -73,7 +73,7 @@ pause 3 'Sign the server key.'
 ( set -x; openssl x509 -req -days 90 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile srvExtfile.cnf )
 statusCheck "sign server key" $?
 
-ls -l ~/docker-ca/
+ls -l ~/$WORKING/
 
 pause 1 'You now have the server certificate created.  This would normally be done for all of your servers (one cert each).'
 
@@ -94,7 +94,8 @@ pause 3 'Sign our client public key.'
 ( set -x; openssl x509 -req -days 90 -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client-cert.pem -extfile clientExtfile.cnf  )
 statusCheck "signing client public key" $?
 
-ls -l ~/docker-ca/
+ls -l ~/$WORKING/
+
 pause 3 'You now have the client certificate created.'
 
 pause 0 'Pick up at EX 2.6, secure & copy the keys, and configure the system.'
